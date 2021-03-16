@@ -1,0 +1,15 @@
+schema: src/server/middlewares/api/schema.generated.graphql
+documents: "src/components/**/*.graphql"
+
+hooks:
+  afterAllFileWrite:
+    - prettier --write
+
+generates:
+  src/components/:
+    preset: near-operation-file
+    presetConfig:
+      baseTypesPath: ../server/middlewares/api/types.generated.ts
+    plugins:
+      - typescript-operations
+      - typescript-react-apollo

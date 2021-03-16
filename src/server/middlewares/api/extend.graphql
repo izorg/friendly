@@ -1,0 +1,9 @@
+extend type PimProduct {
+  leaflets: Leaflets
+}
+
+extend type Query {
+  testClient: Boolean!
+
+  testServer: Boolean!
+}

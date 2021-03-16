@@ -1,0 +1,8 @@
+[browser]
+supports es6-module
+
+[node]
+current node
+
+[test]
+current node

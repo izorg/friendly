@@ -1,0 +1,15 @@
+query ApiTest {
+  getProductsTenantLanguageUpid(
+    language: "de"
+    tenant: "com"
+    upid: "123"
+  ) {
+    canonicalUrl
+    icd10 {
+      id
+    }
+    leaflets {
+      result
+    }
+  }
+}

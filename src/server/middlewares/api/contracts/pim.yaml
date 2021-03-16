@@ -1,0 +1,1361 @@
+openapi: "3.0.3"
+info:
+  version: 1.0.0
+  title: Shop-Apotheke Product Model
+servers:
+  - description: default
+    url: /
+paths:
+  "/products/{tenant}/{language}":
+    get:
+      description: Get a pageable list of product
+      parameters:
+        - $ref: "#/components/parameters/language"
+        - $ref: "#/components/parameters/tenant"
+        - name: upids
+          description: |
+            comma separated list of upid's
+          example: "Mup433FD23,Mup433FD24"
+          schema:
+            type: string
+          allowEmptyValue: false
+          required: true
+          in: query
+        - name: offset
+          example: 0
+          description: |
+            The number of documents to skip in the results set.
+          schema:
+            type: integer
+          required: false
+          in: query
+        - name: limit
+          example: 10
+          description: |
+            The limit specifies the maximum number of documents the endpoint will return.
+            A limit value of 0 is equivalent to setting no limit.
+            Default: 10
+          schema:
+            type: integer
+          required: false
+          in: query
+      responses:
+        "200":
+          description: Success Response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/pim.PageableProductList"
+              examples:
+                pageable_product_list:
+                  $ref: "#/components/examples/pageable_product_list"
+        "400":
+          $ref: "#/components/responses/400"
+      tags:
+        - PIM Controller
+  "/products/{tenant}/{language}/{upid}":
+    get:
+      description: Get a single product
+      parameters:
+        - $ref: "#/components/parameters/language"
+        - $ref: "#/components/parameters/tenant"
+        - name: upid
+          allowEmptyValue: false
+          example: "Mup433FD23"
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/200"
+        "400":
+          $ref: "#/components/responses/400"
+        "404":
+          $ref: "#/components/responses/404"
+      tags:
+        - PIM Controller
+  "/products-with-variants/{tenant}/{language}/{upid}":
+    get:
+      description: Get a single product with it's variants
+      parameters:
+        - $ref: "#/components/parameters/language"
+        - $ref: "#/components/parameters/tenant"
+        - name: upid
+          allowEmptyValue: false
+          example: "Mup433FD23"
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success Response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/pim.ProductWithVariants"
+              examples:
+                bepanthen_5g:
+                  $ref: "#/components/examples/bepanthen_with_variants"
+        "404":
+          $ref: "#/components/responses/404"
+      tags:
+        - PIM Controller
+components:
+  parameters:
+    language:
+      name: language
+      allowEmptyValue: false
+      deprecated: false
+      description: |
+        A language according two **ISO_639-1** two letter language codes. Currently the following language
+        codes a known to provide reasonable data:
+          + de
+          + fr
+          + it
+      in: path
+      required: true
+      schema:
+        type: string
+        maxLength: 2
+        minLength: 2
+      example: "de"
+    tenant:
+      allowEmptyValue: false
+      deprecated: false
+      description: |
+        A tenant code. Currently the following tenant codes a known to provide reasonable data:
+          - at
+          - ch
+          - com
+          - fr
+          - it
+          - at-dev
+          - ch-dev
+          - com-dev
+          - fr-dev
+          - it-dev
+          - at-qs
+          - ch-qs
+          - com-qs
+          - fr-qs
+          - it-qs
+      example: com-qs
+      in: path
+      name: tenant
+      required: true
+      schema:
+        type: string
+        minLength: 1
+  responses:
+    200:
+      description: Success Response
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/pim.Product"
+          examples:
+            bepanthen_5g:
+              $ref: "#/components/examples/bepanthen_5g/value"
+    400:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                enum:
+                  - 400
+              error:
+                type: string
+              message:
+                type: string
+    404:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                enum:
+                  - 404
+              error:
+                type: string
+              message:
+                type: string
+  schemas:
+    pim.Product:
+      type: object
+      required:
+        - canonical_url
+        - created
+        - name
+        - upid
+        - path
+        - type
+        - updated
+      properties:
+        alternate_urls:
+          type: object
+          properties:
+            de-DE:
+              type: string
+            de-AT:
+              type: string
+            fr-FR:
+              type: string
+            it-IT:
+              type: string
+            de-CH:
+              type: string
+            fr-CH:
+              type: string
+        brand:
+          $ref: "#/components/schemas/pim.Brand"
+        canonical_url:
+          type: string
+          format: url
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/pim.Category"
+        category:
+          $ref: "#/components/schemas/pim.Category"
+        created:
+          type: string
+          format: date-time
+        description_short:
+          type: string
+        description_long:
+          type: string
+        description_extra:
+          type: string
+        display_code:
+          description: |
+            The most relevant SKU to be displayed, usually depending on the country.
+            For germany this will most likely be the PZN (Pharmazentralnummer), whereas for
+            france it might be the ACL-13.
+          type: string
+        documents:
+          type: array
+          items:
+            $ref: "#/components/schemas/pim.Document"
+        ean:
+          type: string
+        external_leaflet:
+          type: boolean
+        external_lmiv:
+          type: boolean
+        flags:
+          type: object
+          required:
+            - cool
+            - prescription_medicine
+            - pharma_obl
+            - veterinary
+            - vegetarian
+            - vegan
+            - food
+            - homeopathic
+            - herbal
+            - diet
+            - medicament
+            - bio
+            - marketplace
+          properties:
+            cool:
+              $ref: "#/components/schemas/pim.Flag"
+            prescription_medicine:
+              $ref: "#/components/schemas/pim.Flag"
+            pharma_obl:
+              $ref: "#/components/schemas/pim.Flag"
+            veterinary:
+              $ref: "#/components/schemas/pim.Flag"
+            vegetarian:
+              $ref: "#/components/schemas/pim.Flag"
+            vegan:
+              $ref: "#/components/schemas/pim.Flag"
+            food:
+              $ref: "#/components/schemas/pim.Flag"
+            homeopathic:
+              $ref: "#/components/schemas/pim.Flag"
+            herbal:
+              $ref: "#/components/schemas/pim.Flag"
+            diet:
+              $ref: "#/components/schemas/pim.Flag"
+            medicament:
+              $ref: "#/components/schemas/pim.Flag"
+            bio:
+              $ref: "#/components/schemas/pim.Flag"
+            marketplace:
+              $ref: "#/components/schemas/pim.Flag"
+        follow_up_product_code:
+          type: string
+        icd10:
+          type: array
+          items:
+            $ref: "#/components/schemas/pim.ICD10"
+        ifap:
+          $ref: "#/components/schemas/pim.Ifap"
+        indication_ranges:
+          type: array
+          items:
+            $ref: "#/components/schemas/pim.IndicationRange"
+        images:
+          type: array
+          items:
+            type: string
+            format: url
+        keywords:
+          type: array
+          items:
+            type: string
+        name:
+          type: string
+        manufacturer:
+          $ref: "#/components/schemas/pim.Manufacturer"
+        meta_title:
+          type: string
+        meta_description:
+          type: string
+        mirakl_product_id:
+          type: string
+        ods_partners:
+          type: array
+          items:
+            type: string
+        order_limit:
+          type: integer
+        package_size:
+          $ref: "#/components/schemas/pim.PackageSize"
+        path:
+          type: string
+        pharma_form:
+          $ref: "#/components/schemas/pim.PharmaForm"
+        prices:
+          type: object
+          properties:
+            list:
+              $ref: "#/components/schemas/pim.Price"
+        pzn:
+          type: string
+        rating:
+          type: object
+          properties:
+            count:
+              type: integer
+            average:
+              type: number
+              format: float
+            path:
+              type: string
+        redirect:
+          $ref: "#/components/schemas/pim.Redirect"
+        stock_status:
+          description: |
+            Enumeration listing all valid product status.
+          type: string
+          enum:
+            - "available"
+            - "out_of_sale"
+            - "out_of_stock"
+            - "not_in_catalog"
+            - "free"
+            - "service"
+            - "variant"
+        substances:
+          description: |
+            List of substances taken from the ABDA database. Note that substances from ABDA
+            will usually only be provided for drugs (medicine).
+          type: array
+          items:
+            $ref: "#/components/schemas/pim.ABDASubstance"
+        type:
+          type: string
+          enum:
+            - article
+            - service
+            - set
+        updated:
+          type: string
+          format: date-time
+        upid:
+          type: string
+        variant_code:
+          description: |
+            An arbitrary identifier to be used to cluster product variants. This property
+            was formally knows as fam id.
+          type: string
+          minLength: 1
+        vat:
+          $ref: "#/components/schemas/pim.VAT"
+        videos:
+          type: array
+          items:
+            $ref: "#/components/schemas/3qsdn.Video"
+      example:
+        $ref: "#/components/examples/bepanthen_10g/value"
+    pim.VAT:
+      type: object
+      required:
+        - code
+        - rate
+      properties:
+        code:
+          type: string
+          description: |
+            XX_XX - Free of Tax
+            DE_RR - Germany, Reduced Rate (7%)
+            AT_SR - Austria, Standard Rate (20%)
+            AT_TS - Austria, Tourism Services (13%)
+            AT_BI - Austria, Basic Items (10%)
+            FR_SR - France, Standard Rate (20%)
+            FR_RR - France, Restaurants, Transportation and Tourism Services (10%)
+            FR_UT - France, Utilities (5.5%)
+            FR_PR - France, Press (2.1%)
+            IT_SR - Italy, Standard Rate (22%)
+            IT_RR - Italy, Reduced Rate (10%)
+            IT_FB - Italy, Food and Books (4%)
+            CH_SR - Switzerland, Standard Rate (7.7%)
+            CH_RR - Switzerland, Reduced Rate (2.5%)
+          enum:
+            - XX_XX
+            - DE_SR
+            - DE_RR
+            - AT_SR
+            - AT_TS
+            - AT_BI
+            - FR_SR
+            - FR_RR
+            - FR_UT
+            - FR_PR
+            - IT_SR
+            - IT_RR
+            - IT_FB
+            - CH_SR
+            - CH_RR
+        rate:
+          type: number
+          format: float
+          minimum: 0
+      example: { "code": "DE_SR", "rate": "16.0" }
+    pim.PharmaForm:
+      type: object
+      required:
+        - code
+        - label
+      properties:
+        code:
+          type: string
+        label:
+          type: string
+      example: { "code": "FTA", "label": "Filmtabletten" }
+    pim.Manufacturer:
+      type: object
+      required:
+        - code
+        - name
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        path:
+          type: string
+      example:
+        {
+          "code": "A009840",
+          "name": "Pfizer OFG Germany GmbH",
+          "path": "/hersteller/pfizer-ofg-germany-gmbh",
+        }
+    pim.PackageSize:
+      type: object
+      required:
+        - unit
+        - quantity
+        - value
+      properties:
+        norm:
+          type: string
+        unit:
+          type: string
+        quantity:
+          type: string
+        value:
+          type: integer
+      example: { "norm": "D3", "unit": "St", "quantity": "50", "value": 50 }
+    pim.ABDASubstance:
+      description: |
+        List of substances taken from the ABDA database. Note that a substance can be
+        active or additive. Active substances will usually be provided with quantity and unit,
+        whereas additive substances most likely only provided a description.<p>
+        Note that ABDA is an abbreviation for _Bundesvereinigung Deutscher Apothekerverbände e. V._
+        (formerly known as _Arbeitsgemeinschaft der Berufsvertretungen Deutscher Apotheker_).
+      type: object
+      required:
+        - agent_id
+        - type
+        - description
+      properties:
+        agent_id:
+          type: integer
+          minimum: 0
+        type:
+          description: |
+            Type of a substance, possible value are
+              - 0 specifying an active substance (Wirkstoff)
+              - 1 specifying an additive substance (Hilfsstoff)
+          type: integer
+          enum:
+            - 0
+            - 1
+        description:
+          type: string
+        quantity:
+          type: number
+          minimum: 0
+        unit:
+          type: string
+    pim.Category:
+      type: object
+      required:
+        - code
+        - label
+      properties:
+        code:
+          type: string
+        label:
+          type: string
+      example: { "code": "csd00275", "label": "Fiebersenkende Schmerzmittel" }
+    pim.Brand:
+      type: object
+      required:
+        - code
+        - name
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        path:
+          type: string
+    pim.Flag:
+      type: object
+      required:
+        - active
+        - label
+      properties:
+        active:
+          type: boolean
+        label:
+          type: string
+      example: { "active": true, "label": "Arzneimittel" }
+    pim.ICD10:
+      type: object
+      required:
+        - id
+        - description
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+      example: { "id": "F52.2", "description": "Versagen genitaler Reaktionen" }
+    3qsdn.Video:
+      type: object
+      required:
+        - code
+        - created
+        - duration_in_seconds
+      properties:
+        code:
+          type: string
+        created:
+          type: string
+          format: date-time
+        modified:
+          type: string
+          format: date-time
+        duration_in_seconds:
+          type: number
+        mp4:
+          type: string
+          format: url
+        mp4_mobile:
+          type: string
+          format: url
+        thumbnail:
+          type: string
+          format: url
+        description:
+          type: string
+        webm:
+          type: string
+          format: url
+        webm_mobile:
+          type: string
+          format: url
+      example:
+        $ref: "#/components/examples/video/value"
+    pim.Document:
+      type: object
+      required:
+        - type
+        - mimetype
+        - url
+      properties:
+        type:
+          type: string
+          enum:
+            - "internal-hw"
+            - "internal-lv"
+            - "internal-bp"
+        label:
+          type: string
+        mimetype:
+          type: string
+        url:
+          type: string
+          format: url
+    pim.Redirect:
+      type: object
+      required:
+        - code
+        - type
+      properties:
+        code:
+          type: string
+        type:
+          type: string
+          enum:
+            - product
+            - category
+    pim.IndicationRange:
+      type: object
+      required:
+        - code
+        - description
+      properties:
+        code:
+          type: string
+        description:
+          type: string
+    pim.Ifap:
+      type: object
+      required:
+        - active
+      properties:
+        active:
+          type: boolean
+        indication:
+          type: string
+        dosage:
+          type: string
+        modality:
+          type: string
+        sideeffects:
+          type: string
+        interaction:
+          type: string
+        contraindication:
+          type: string
+        pregnancy:
+          type: string
+        patientsdetails:
+          type: string
+        miscellaneous:
+          type: string
+    pim.Price:
+      type: object
+      required:
+        - currency
+        - amount
+        - formatted
+      properties:
+        currency:
+          type: string
+        amount:
+          type: integer
+        formatted:
+          type: string
+      example: { "currency": "EUR", "amount": 1895, "formatted": "€ 18,95" }
+    pim.ProductWithVariants:
+      allOf:
+        - $ref: "#/components/schemas/pim.Product"
+        - type: object
+          required:
+            - variants
+          properties:
+            variants:
+              type: array
+              items:
+                $ref: "#/components/schemas/pim.Product"
+      example: "#/components/examples/bepanthen_with_variants"
+    pim.PageableProductList:
+      type: object
+      required:
+        - items
+        - total
+        - offset
+        - limit
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/pim.Product"
+        total:
+          type: integer
+          format: int64
+        offset:
+          type: integer
+          format: int32
+        limit:
+          type: integer
+          format: int32
+      example: "#/components/examples/pagable_product_list"
+  examples:
+    video:
+      summary: Example of a 3qsdn.Video
+      value:
+        code: "862a1210-bc0c-11e4-9476-002590c750be"
+        created: "2016-09-06T13:03:02Z"
+        modified: "2016-09-06T13:59:03Z"
+        duration_in_seconds: 96
+        mp4: "https://sdn-global-prog-cache.3qsdn.com/2538/files/15/03/294224/2-MwmhCrZ8p2Hq9FJW.mp4"
+        mp4_mobile: "https://sdn-global-prog-cache.3qsdn.com/2538/files/15/03/294224/3-krTzfVGYZKFRghHB.mp4"
+        thumbnail: "https://sdn-global-prog-cache.3qsdn.com/thumbs/2014/2538/294224/QWVgJwYqFfBKr9mh.png"
+        description: "Anwendungsvideo zu Angocin Anti Infekt"
+        webm: "https://sdn-global-prog-cache.3qsdn.com/2538/files/15/03/294224/7-ZjJXhdyNRnrLY4Vb.webm"
+        webm_mobile: "https://sdn-global-prog-cache.3qsdn.com/2538/files/15/02/289145/9-jtLW3vfJpzyhkRdH.webm"
+    bepanthen_5g:
+      summary: Example of a product
+      value:
+        alternate_urls:
+          de-AT: "https://www.shop-apotheke.at/arzneimittel/D1578675/bepanthen-augen-und-nasensalbe.htm"
+          de-DE: "https://www.shop-apotheke.com/arzneimittel/1578675/bepanthen-augen-und-nasensalbe.htm"
+        brand:
+          code: csd2300
+          name: Bepanthen
+          path: /marken/bepanthen/
+        categories:
+          - code: csd03344
+            label: 100 Topseller
+          - code: csd1664
+            label: Wundheilung
+        canonical_url: "https://www.shop-apotheke.com/arzneimittel/1578675/bepanthen-augen-und-nasensalbe.htm"
+        category:
+          code: csd00024
+          label: "Wundversorgung & Hilfsmittel "
+        created: "2018-06-25T15:17:45Z"
+        description_short: Zur sanften Heilung von wunden Nasen sowie oberflächlichen Schädigungen am Auge
+        description_long:
+          "<P><STRONG>Bepanthen® Augen- und Nasensalbe fördert die sanfte Heilung bei einer wunden Nase und einer trockenen,
+          rissigen Nasenschleimhaut durch z.B. häufiges Naseputzen, sowie bei oberflächlichen Schädigungen am Auge,
+          wie Reizungen an der Binde- oder Hornhaut des Auges durch z.B. Wind, Sonne oder gechlortes Wasser.
+          </STRONG></P>
+          <UL><LI>wenn Sie bereits auf einen der Bestandteile des Arzneimittels überempfindlich reagiert haben.</LI></UL>"
+        description_extra: Zur sanften Heilung von wunden Nasen
+        display_code: 01578681
+        documents:
+          - type: internal-bp
+            mimetype: application/pdf
+            url: "https://cdn.shop-apotheke.com/pdf/D01578675-bp.pdf"
+            label: Beipackzettel Bepanthen® Augen- und Nasensalbe
+        ean: "4150015786751"
+        flags:
+          cool:
+            active: false
+            label: kühlpflichtig
+          bio:
+            active: false
+            label: Bio
+          prescription_medicine:
+            active: false
+            label: Rezeptpflichtig
+          pharma_obl:
+            active: false
+            label: Apothekenpflichtig
+          veterinary:
+            active: false
+            label: Tierarzneimittel
+          vegetarian:
+            active: false
+            label: Vegetarisch
+          vegan:
+            active: false
+            label: Vegan
+          food:
+            active: false
+            label: Lebensmittel
+          homeopathic:
+            active: false
+            label: Homöopathisch
+          herbal:
+            active: false
+            label: Pflanzlich
+          diet:
+            active: false
+            label: Diätikum
+          medicament:
+            active: false
+            label: Medikament
+          marketplace:
+            active: false
+            label: Marktplatz-Produkt
+        follow_up_product_code: 01578681
+        external_leaflet: true
+        external_lmiv: false
+        icd10:
+          - id: J34.8
+            description: Sonstige näher bezeichnete Krankheiten der Nase und der Nasennebenhöhlen
+          - id: S05.0
+            description: Verletzung der Konjunktiva und Abrasio corneae ohne Angabe eines Fremdkörpers
+        ifap:
+          active: true
+          indication:
+            "<ul><li>Das Präparat ist ein Mittel zur Unterstützung der Wundheilung.</li>
+            <li>Das Arzneimittel wird angewendet:<ul>
+            <li>Zur Unterstützung der Heilung bei oberflächlichen leichten Hautschädigungen
+            an der Bindehaut, Hornhaut, bzw. Nasenschleimhaut.</li></ul></li></ul>"
+          dosage:
+            "<ul><li>Wenden Sie das Arzneimittel immer genau nach der Anweisung an. Bitte fragen
+            Sie bei Ihrem Arzt oder Apotheker nach, wenn Sie sich nicht ganz sicher sind.</li>
+            <li>Falls vom Arzt nicht anders verordnet, ist die übliche Dosis:<ul>
+            <li>Streichen Sie ein- bis mehrmals täglich mit Hilfe der Kanüle einen
+            ca. 1 cm langen Salbenstrang in den Bindehautsack oder auf die Nasenschleimhaut
+            (bei Säuglingen und Kleinkindern entsprechend weniger). Durch Andrücken der Nasenflügel
+            kann die Salbe in der Nase leicht einmassiert werden.</li>
+            <li>Falls Sie das Präparat für die Nase verwendet haben, darf dieselbe Tube nicht mehr
+            am Auge verwendet werden.</li></ul></li><li>Die Dauer der Anwendung richtet sich nach
+            Art und Verlauf der Erkrankung. Wenden Sie sich bitte an Ihren behandelnden Arzt.</li></ul>"
+          modality:
+            "<ul><li>Streichen Sie ein- bis mehrmals täglich mit Hilfe der Kanüle einen ca. 1 cm
+            langen Salbenstrang in den Bindehautsack oder auf die Nasenschleimhaut
+            (bei Säuglingen und Kleinkindern entsprechend weniger). Durch Andrücken der Nasenflügel
+            kann die Salbe in der Nase leicht einmassiert werden.</li><li>Falls Sie das Präparat für
+            die Nase verwendet haben, darf dieselbe Tube nicht mehr am Auge verwendet werden.</li></ul>"
+          sideeffects:
+            "<ul><li>Wie alle Arzneimittel kann das Präparat Nebenwirkungen haben, die aber nicht bei
+            jedem auftreten müssen.</li><li>Bei der Bewertung von Nebenwirkungen werden folgende
+            Häufigkeitsangaben zugrunde gelegt:<ul><li>Sehr häufig: mehr als 1 von 10 Behandelten</li>
+            <li>Häufig: weniger als 1 von 10, aber mehr als 1 von 100 Behandelten</li><li>Gelegentlich:
+            weniger als 1 von 100, aber mehr als 1 von 1.000 Behandelten</li><li>Selten: weniger
+            als 1 von 1.000, aber mehr als 1 von 10.000 Behandelten</li><li>Sehr selten: weniger als
+            1 von 10.000 Behandelten, einschließlich Einzelfälle</li><li>Nicht bekannt:
+            Häufigkeit auf Grundlage der verfügbaren Daten nicht abschätzbar</li></ul></li>
+            <li>Bedeutsame Nebenwirkungen oder Zeichen, auf die Sie achten sollten, und Maßnahmen,
+            wenn Sie betroffen sind:<ul><li>Wenn Sie von einer der nachfolgend genannten Nebenwirkungen
+            betroffen sind, wenden Sie das Präparat nicht weiter an und suchen Sie Ihren Arzt möglichst
+            umgehend auf.</li><li>Haut:<ul><li>Selten:<ul><li>In seltenen Fällen wurden Unverträglichkeitsreaktionen
+            in Form von Kontaktallergien beobachtet.</li></ul></li></ul></li></ul></li>
+            <li>Informieren Sie bitte Ihren Arzt oder Apotheker, wenn eine der aufgeführten Nebenwirkungen
+            Sie erheblich beeinträchtigt oder Sie Nebenwirkungen bemerken, die nicht angegeben sind.</li></ul>"
+          interaction:
+            "<ul><li>Bei Anwendung des Präparates mit anderen Arzneimitteln<ul>
+            <li>sind bislang keine Wechselwirkungen bekannt geworden.</li></ul></li></ul>"
+          contraindication:
+            "<ul><li>Das Arzneimittel darf nicht angewendet werden<ul>
+            <li>wenn Sie bereits auf einen der Bestandteile des Arzneimittels überempfindlich reagiert haben.</li>
+            </ul></li></ul>"
+          pregnancy: "<ul><li>Während der Schwangerschaft und Stillzeit besteht für das Arzneimittel keine Anwendungsbeschränkung.</li></ul>"
+          patientsdetails:
+            '<ul><li>Besondere Vorsicht bei der Anwendung des Arzneimittels ist erforderlich<ul>
+            <li>Bei Anwendung am Auge ist eine kurzfristige Sehbeeinträchtigung möglich.</li></ul>
+            </li><li>Was sollten Kontaktlinsenträger bei der Anwendung des Präparates beachten?<ul>
+            <li>Hinweis: Als Kontaktlinsenträger sollten Sie das Arzneimittel nicht während des Tragens
+            der Linsen benutzen, da dies zur Verschmierung der Kontaktlinse sowie zu Unverträglichkeiten
+            mit dem Linsenmaterial führen könnte.</li></ul></li></ul><p>\_</p><ul>
+            <li>Verkehrstüchtigkeit und das Bedienen von Maschinen<ul>
+            <li>Bei Anwendung am Auge ist eine kurzfristige Sehbeeinträchtigung möglich.
+            Die Fähigkeit zur aktiven Teilnahme am Straßenverkehr, bei der Arbeit ohne sicheren Halt
+            und zur Bedienung von Maschinen kann dadurch beeinträchtigt sein und sollte dann in dieser
+            Zeit vermieden werden.</li></ul></li></ul>'
+        indication_ranges:
+          - code: "47"
+            description: Ophthalmika
+          - code: 47K
+            description: Vitamine
+          - code: 47K02
+            description: Dexpanthenol
+        images:
+          - "https://cdn.shop-apotheke.com/images/bepanthen-augen-und-nasensalbe-augen-und-nasensalbe-D01578675-p1.jpg"
+          - "https://cdn.shop-apotheke.com/images/bepanthen-augen-und-nasensalbe-augen-und-nasensalbe-D01578675-p2.jpg"
+        keywords:
+          - Trockene Nase
+        name: Bepanthen® Augen- und Nasensalbe
+        manufacturer:
+          code: A006410
+          name: Bayer Vital GmbH
+          path: /hersteller/bayer-vital-gmbh
+        meta_title: Bepanthen® Augen- und Nasensalbe 10 g - shop-apotheke.com
+        meta_description: |-
+          Bepanthen® Augen- und Nasensalbe 10 g für nur € 4,59 bei Ihrer Online Apotheke für Deutschland kaufen und bis zu 33% sparen.
+        mirakl_product_id: e435e0bd-37ec-428b-99ed-65a8dca9a5c2
+        ods_partners:
+          - zava
+        order_limit: 15
+        package_size:
+          norm: "N3"
+          unit: g
+          value: 5
+          quantity: "5"
+        pharma_form:
+          code: ASN
+          label: Augen- und Nasensalbe
+        pzn: 01578681
+        rating:
+          count: 431
+          average: 4.872
+          path: /produktbewertungen/3464237/aspirin-plus-c-brausetabletten.htm
+        redirect:
+          code: 01578681
+          type: product
+        substances:
+          - agent_id: 1613700
+            type: 1
+            description: Pantolacton
+          - agent_id: 186301
+            type: 0
+            description: Dexpanthenol
+            quantity: 50
+            unit: mg
+        type: "article"
+        updated: "2013-08-26T00:00:00+00:00"
+        upid: upaPKCLK4
+        path: "/arzneimittel/1578675/bepanthen-augen-und-nasensalbe.htm"
+        prices:
+          list:
+            currency: EUR
+            amount: 287
+            formatted: "€ 2,87"
+        variant_code: "3341579000"
+        vat:
+          code: DE_SR
+          rate: 16
+        videos:
+          - $ref: "#/components/examples/video/value"
+    bepanthen_10g:
+      summary: Example of a product
+      value:
+        alternate_urls:
+          de-AT: "https://www.shop-apotheke.at/arzneimittel/D1578675/bepanthen-augen-und-nasensalbe.htm"
+          de-DE: "https://www.shop-apotheke.com/arzneimittel/1578675/bepanthen-augen-und-nasensalbe.htm"
+        brand:
+          code: csd2300
+          name: Bepanthen
+          path: /marken/bepanthen/
+        categories:
+          - code: csd03344
+            label: 100 Topseller
+          - code: csd1664
+            label: Wundheilung
+        canonical_url: "https://www.shop-apotheke.com/arzneimittel/1578675/bepanthen-augen-und-nasensalbe.htm"
+        category:
+          code: csd00024
+          label: "Wundversorgung & Hilfsmittel "
+        created: "2018-06-25T15:17:45Z"
+        description_short: Zur sanften Heilung von wunden Nasen sowie oberflächlichen Schädigungen am Auge
+        description_long: >-
+          <P><STRONG>Bepanthen® Augen- und Nasensalbe fördert die sanfte Heilung bei einer wunden Nase und einer trockenen,
+          rissigen Nasenschleimhaut durch z.B. häufiges Naseputzen, sowie bei oberflächlichen Schädigungen am Auge,
+          wie Reizungen an der Binde- oder Hornhaut des Auges durch z.B. Wind, Sonne oder gechlortes Wasser. </STRONG></P>
+          <UL><LI>wenn Sie bereits auf einen der Bestandteile des Arzneimittels überempfindlich reagiert haben.</LI></UL>
+        description_extra: Zur sanften Heilung von wunden Nasen
+        display_code: 01578675
+        documents:
+          - type: internal-bp
+            mimetype: application/pdf
+            url: "https://cdn.shop-apotheke.com/pdf/D01578675-bp.pdf"
+            label: Beipackzettel Bepanthen® Augen- und Nasensalbe
+        ean: "4150015786751"
+        flags:
+          cool:
+            active: false
+            label: kühlpflichtig
+          bio:
+            active: false
+            label: Bio
+          prescription_medicine:
+            active: false
+            label: Rezeptpflichtig
+          pharma_obl:
+            active: false
+            label: Apothekenpflichtig
+          veterinary:
+            active: false
+            label: Tierarzneimittel
+          vegetarian:
+            active: false
+            label: Vegetarisch
+          vegan:
+            active: false
+            label: Vegan
+          food:
+            active: false
+            label: Lebensmittel
+          homeopathic:
+            active: false
+            label: Homöopathisch
+          herbal:
+            active: false
+            label: Pflanzlich
+          diet:
+            active: false
+            label: Diätikum
+          medicament:
+            active: false
+            label: Medikament
+          marketplace:
+            active: false
+            label: Marktplatz-Produkt
+        follow_up_product_code: 01578681
+        external_leaflet: true
+        external_lmiv: false
+        icd10:
+          - id: J34.8
+            description: Sonstige näher bezeichnete Krankheiten der Nase und der Nasennebenhöhlen
+          - id: S05.0
+            description: Verletzung der Konjunktiva und Abrasio corneae ohne Angabe eines Fremdkörpers
+        ifap:
+          active: true
+          indication:
+            "<ul><li>Das Präparat ist ein Mittel zur Unterstützung der Wundheilung.</li>
+            <li>Das Arzneimittel wird angewendet:<ul><li>Zur Unterstützung der Heilung bei
+            oberflächlichen leichten Hautschädigungen an der Bindehaut, Hornhaut, bzw.
+            Nasenschleimhaut.</li></ul></li></ul>"
+          dosage:
+            "<ul><li>Wenden Sie das Arzneimittel immer genau nach der Anweisung an. Bitte fragen Sie bei Ihrem
+            Arzt oder Apotheker nach, wenn Sie sich nicht ganz sicher sind.</li><li>Falls vom Arzt nicht
+            anders verordnet, ist die übliche Dosis:<ul><li>Streichen Sie ein- bis mehrmals täglich mit Hilfe
+            der Kanüle einen ca. 1 cm langen Salbenstrang in den Bindehautsack oder auf die Nasenschleimhaut
+            (bei Säuglingen und Kleinkindern entsprechend weniger). Durch Andrücken der Nasenflügel kann die
+            Salbe in der Nase leicht einmassiert werden.</li><li>Falls Sie das Präparat für die Nase verwendet
+            haben, darf dieselbe Tube nicht mehr am Auge verwendet werden.</li></ul></li><li>Die Dauer der
+            Anwendung richtet sich nach Art und Verlauf der Erkrankung. Wenden Sie sich bitte an Ihren
+            behandelnden Arzt.</li></ul>"
+          modality:
+            "<ul><li>Streichen Sie ein- bis mehrmals täglich mit Hilfe der Kanüle einen ca. 1 cm langen
+            Salbenstrang in den Bindehautsack oder auf die Nasenschleimhaut (bei Säuglingen und Kleinkindern
+            entsprechend weniger). Durch Andrücken der Nasenflügel kann die Salbe in der Nase leicht einmassiert
+            werden.</li><li>Falls Sie das Präparat für die Nase verwendet haben, darf dieselbe Tube nicht mehr
+            am Auge verwendet werden.</li></ul>"
+          sideeffects:
+            "<ul><li>Wie alle Arzneimittel kann das Präparat Nebenwirkungen haben, die aber nicht bei jedem
+            auftreten müssen.</li><li>Bei der Bewertung von Nebenwirkungen werden folgende Häufigkeitsangaben
+            zugrunde gelegt:<ul><li>Sehr häufig: mehr als 1 von 10 Behandelten</li><li>Häufig: weniger als 1
+            von 10, aber mehr als 1 von 100 Behandelten</li><li>Gelegentlich: weniger als 1 von 100, aber mehr
+            als 1 von 1.000 Behandelten</li><li>Selten: weniger als 1 von 1.000, aber mehr als 1 von 10.000
+            Behandelten</li><li>Sehr selten: weniger als 1 von 10.000 Behandelten, einschließlich Einzelfälle</li>
+            <li>Nicht bekannt: Häufigkeit auf Grundlage der verfügbaren Daten nicht abschätzbar</li></ul></li>
+            <li>Bedeutsame Nebenwirkungen oder Zeichen, auf die Sie achten sollten, und Maßnahmen, wenn Sie
+            betroffen sind:<ul><li>Wenn Sie von einer der nachfolgend genannten Nebenwirkungen betroffen sind,
+            wenden Sie das Präparat nicht weiter an und suchen Sie Ihren Arzt möglichst umgehend auf.</li>
+            <li>Haut:<ul><li>Selten:<ul><li>In seltenen Fällen wurden Unverträglichkeitsreaktionen in Form von
+            Kontaktallergien beobachtet.</li></ul></li></ul></li></ul></li><li>Informieren Sie bitte Ihren
+            Arzt oder Apotheker, wenn eine der aufgeführten Nebenwirkungen Sie erheblich beeinträchtigt oder
+            Sie Nebenwirkungen bemerken, die nicht angegeben sind.</li></ul>"
+          interaction:
+            "<ul><li>Bei Anwendung des Präparates mit anderen Arzneimitteln<ul><li>sind bislang keine
+            Wechselwirkungen bekannt geworden.</li></ul></li></ul>"
+          contraindication:
+            "<ul><li>Das Arzneimittel darf nicht angewendet werden<ul><li>wenn Sie bereits auf einen der
+            Bestandteile des Arzneimittels überempfindlich reagiert haben.</li></ul></li></ul>"
+          pregnancy:
+            "<ul><li>Während der Schwangerschaft und Stillzeit besteht für das Arzneimittel keine
+            Anwendungsbeschränkung.</li></ul>"
+          patientsdetails:
+            '<ul><li>Besondere Vorsicht bei der Anwendung des Arzneimittels ist erforderlich<ul>
+            <li>Bei Anwendung am Auge ist eine kurzfristige Sehbeeinträchtigung möglich.</li></ul></li>
+            <li>Was sollten Kontaktlinsenträger bei der Anwendung des Präparates beachten?<ul>
+            <li>Hinweis: Als Kontaktlinsenträger sollten Sie das Arzneimittel nicht während des Tragens
+            der Linsen benutzen, da dies zur Verschmierung der Kontaktlinse sowie zu Unverträglichkeiten
+            mit dem Linsenmaterial führen könnte.</li></ul></li></ul><p>\_</p><ul><li>Verkehrstüchtigkeit
+            und das Bedienen von Maschinen<ul><li>Bei Anwendung am Auge ist eine kurzfristige
+            Sehbeeinträchtigung möglich. Die Fähigkeit zur aktiven Teilnahme am Straßenverkehr,
+            bei der Arbeit ohne sicheren Halt und zur Bedienung von Maschinen kann dadurch beeinträchtigt
+            sein und sollte dann in dieser Zeit vermieden werden.</li></ul></li></ul>'
+        indication_ranges:
+          - code: "47"
+            description: Ophthalmika
+          - code: 47K
+            description: Vitamine
+          - code: 47K02
+            description: Dexpanthenol
+        images:
+          - "https://cdn.shop-apotheke.com/images/bepanthen-augen-und-nasensalbe-augen-und-nasensalbe-D01578675-p1.jpg"
+          - "https://cdn.shop-apotheke.com/images/bepanthen-augen-und-nasensalbe-augen-und-nasensalbe-D01578675-p2.jpg"
+        keywords:
+          - Trockene Nase
+        name: Bepanthen® Augen- und Nasensalbe
+        manufacturer:
+          code: A006410
+          name: Bayer Vital GmbH
+          path: /hersteller/bayer-vital-gmbh
+        meta_title: Bepanthen® Augen- und Nasensalbe 10 g - shop-apotheke.com
+        meta_description: |-
+          Bepanthen® Augen- und Nasensalbe 10 g für nur € 4,59 bei Ihrer Online Apotheke für Deutschland kaufen und bis zu 33% sparen.
+        mirakl_product_id: e435e0bd-37ec-428b-99ed-65a8dca9a5c2
+        ods_partners:
+          - zava
+        order_limit: 15
+        package_size:
+          norm: "N3"
+          unit: g
+          value: 10
+          quantity: "10"
+        pharma_form:
+          code: ASN
+          label: Augen- und Nasensalbe
+        pzn: 01578675
+        rating:
+          count: 431
+          average: 4.872
+          path: /produktbewertungen/3464237/aspirin-plus-c-brausetabletten.htm
+        redirect:
+          code: 01578681
+          type: product
+        substances:
+          - agent_id: 1613700
+            type: 1
+            description: Pantolacton
+          - agent_id: 186301
+            type: 0
+            description: Dexpanthenol
+            quantity: 50
+            unit: mg
+        type: "article"
+        updated: "2013-08-26T00:00:00+00:00"
+        upid: upaPKCLK4
+        path: "/arzneimittel/1578675/bepanthen-augen-und-nasensalbe.htm"
+        prices:
+          list:
+            currency: EUR
+            amount: 459
+            formatted: "€ 4,59"
+        variant_code: "3341579000"
+        vat:
+          code: DE_SR
+          rate: 16
+        videos:
+          - $ref: "#/components/examples/video/value"
+    bepanthen_with_variants:
+      summary: Example of a product with variants
+      value:
+        alternate_urls:
+          de-AT: "https://www.shop-apotheke.at/arzneimittel/D1578675/bepanthen-augen-und-nasensalbe.htm"
+          de-DE: "https://www.shop-apotheke.com/arzneimittel/1578675/bepanthen-augen-und-nasensalbe.htm"
+        brand:
+          code: csd2300
+          name: Bepanthen
+          path: /marken/bepanthen/
+        categories:
+          - code: csd03344
+            label: 100 Topseller
+          - code: csd1664
+            label: Wundheilung
+        canonical_url: "https://www.shop-apotheke.com/arzneimittel/1578675/bepanthen-augen-und-nasensalbe.htm"
+        category:
+          code: csd00024
+          label: "Wundversorgung & Hilfsmittel "
+        created: "2018-06-25T15:17:45Z"
+        description_short: Zur sanften Heilung von wunden Nasen sowie oberflächlichen Schädigungen am Auge
+        description_long:
+          "<P><STRONG>Bepanthen® Augen- und Nasensalbe fördert die sanfte Heilung bei einer wunden Nase und einer trockenen,
+          rissigen Nasenschleimhaut durch z.B. häufiges Naseputzen, sowie bei oberflächlichen Schädigungen
+          am Auge, wie Reizungen an der Binde- oder Hornhaut des Auges durch z.B. Wind, Sonne oder gechlortes
+          Wasser. </STRONG></P>
+          <UL><LI>wenn Sie bereits auf einen der Bestandteile des Arzneimittels überempfindlich reagiert haben.</LI></UL>"
+        description_extra: Zur sanften Heilung von wunden Nasen
+        display_code: 01578675
+        documents:
+          - type: internal-bp
+            mimetype: application/pdf
+            url: "https://cdn.shop-apotheke.com/pdf/D01578675-bp.pdf"
+            label: Beipackzettel Bepanthen® Augen- und Nasensalbe
+        ean: "4150015786751"
+        flags:
+          cool:
+            active: false
+            label: kühlpflichtig
+          bio:
+            active: false
+            label: Bio
+          prescription_medicine:
+            active: false
+            label: Rezeptpflichtig
+          pharma_obl:
+            active: false
+            label: Apothekenpflichtig
+          veterinary:
+            active: false
+            label: Tierarzneimittel
+          vegetarian:
+            active: false
+            label: Vegetarisch
+          vegan:
+            active: false
+            label: Vegan
+          food:
+            active: false
+            label: Lebensmittel
+          homeopathic:
+            active: false
+            label: Homöopathisch
+          herbal:
+            active: false
+            label: Pflanzlich
+          diet:
+            active: false
+            label: Diätikum
+          medicament:
+            active: false
+            label: Medikament
+          marketplace:
+            active: false
+            label: Marktplatz-Produkt
+        follow_up_product_code: 01578681
+        external_leaflet: true
+        external_lmiv: false
+        icd10:
+          - id: J34.8
+            description: Sonstige näher bezeichnete Krankheiten der Nase und der Nasennebenhöhlen
+          - id: S05.0
+            description: Verletzung der Konjunktiva und Abrasio corneae ohne Angabe eines Fremdkörpers
+        ifap:
+          active: true
+          indication:
+            "<ul><li>Das Präparat ist ein Mittel zur Unterstützung der Wundheilung.</li>
+            <li>Das Arzneimittel wird angewendet:<ul><li>Zur Unterstützung der Heilung bei
+            oberflächlichen leichten Hautschädigungen an der Bindehaut, Hornhaut, bzw. Nasenschleimhaut.</li>
+            </ul></li></ul>"
+          dosage:
+            "<ul><li>Wenden Sie das Arzneimittel immer genau nach der Anweisung an. Bitte fragen Sie bei Ihrem
+            Arzt oder Apotheker nach, wenn Sie sich nicht ganz sicher sind.</li><li>Falls vom Arzt nicht anders
+            verordnet, ist die übliche Dosis:<ul><li>Streichen Sie ein- bis mehrmals täglich mit Hilfe der
+            Kanüle einen ca. 1 cm langen Salbenstrang in den Bindehautsack oder auf die Nasenschleimhaut
+            (bei Säuglingen und Kleinkindern entsprechend weniger). Durch Andrücken der Nasenflügel kann die
+            Salbe in der Nase leicht einmassiert werden.</li><li>Falls Sie das Präparat für die Nase verwendet
+            haben, darf dieselbe Tube nicht mehr am Auge verwendet werden.</li></ul></li>
+            <li>Die Dauer der Anwendung richtet sich nach Art und Verlauf der Erkrankung. Wenden Sie sich
+            bitte an Ihren behandelnden Arzt.</li></ul>"
+          modality:
+            "<ul><li>Streichen Sie ein- bis mehrmals täglich mit Hilfe der Kanüle einen ca. 1 cm langen
+            Salbenstrang in den Bindehautsack oder auf die Nasenschleimhaut (bei Säuglingen und
+            Kleinkindern entsprechend weniger). Durch Andrücken der Nasenflügel kann die Salbe in der
+            Nase leicht einmassiert werden.</li><li>Falls Sie das Präparat für die Nase verwendet haben,
+            darf dieselbe Tube nicht mehr am Auge verwendet werden.</li></ul>"
+          sideeffects:
+            "<ul><li>Wie alle Arzneimittel kann das Präparat Nebenwirkungen haben, die aber nicht bei
+            jedem auftreten müssen.</li><li>Bei der Bewertung von Nebenwirkungen werden folgende
+            Häufigkeitsangaben zugrunde gelegt:<ul><li>Sehr häufig: mehr als 1 von 10 Behandelten</li>
+            <li>Häufig: weniger als 1 von 10, aber mehr als 1 von 100 Behandelten</li>
+            <li>Gelegentlich: weniger als 1 von 100, aber mehr als 1 von 1.000 Behandelten</li>
+            <li>Selten: weniger als 1 von 1.000, aber mehr als 1 von 10.000 Behandelten</li>
+            <li>Sehr selten: weniger als 1 von 10.000 Behandelten, einschließlich Einzelfälle</li>
+            <li>Nicht bekannt: Häufigkeit auf Grundlage der verfügbaren Daten nicht abschätzbar</li>
+            </ul></li><li>Bedeutsame Nebenwirkungen oder Zeichen, auf die Sie achten sollten, und
+            Maßnahmen, wenn Sie betroffen sind:<ul><li>Wenn Sie von einer der nachfolgend genannten
+            Nebenwirkungen betroffen sind, wenden Sie das Präparat nicht weiter an und suchen Sie Ihren
+            Arzt möglichst umgehend auf.</li><li>Haut:<ul><li>Selten:<ul><li>In seltenen Fällen wurden
+            Unverträglichkeitsreaktionen in Form von Kontaktallergien beobachtet.</li></ul></li></ul>
+            </li></ul></li><li>Informieren Sie bitte Ihren Arzt oder Apotheker, wenn eine der
+            aufgeführten Nebenwirkungen Sie erheblich beeinträchtigt oder Sie Nebenwirkungen bemerken,
+            die nicht angegeben sind.</li></ul>"
+          interaction: "<ul><li>Bei Anwendung des Präparates mit anderen Arzneimitteln<ul><li>sind bislang keine Wechselwirkungen bekannt geworden.</li></ul></li></ul>"
+          contraindication:
+            "<ul><li>Das Arzneimittel darf nicht angewendet werden<ul><li>wenn Sie bereits auf einen
+            der Bestandteile des Arzneimittels überempfindlich reagiert haben.</li></ul></li></ul>"
+          pregnancy:
+            "<ul><li>Während der Schwangerschaft und Stillzeit besteht für das Arzneimittel keine
+            Anwendungsbeschränkung.</li></ul>"
+          patientsdetails:
+            '<ul><li>Besondere Vorsicht bei der Anwendung des Arzneimittels ist erforderlich<ul>
+            <li>Bei Anwendung am Auge ist eine kurzfristige Sehbeeinträchtigung möglich.</li></ul></li>
+            <li>Was sollten Kontaktlinsenträger bei der Anwendung des Präparates beachten?<ul>
+            <li>Hinweis: Als Kontaktlinsenträger sollten Sie das Arzneimittel nicht während des
+            Tragens der Linsen benutzen, da dies zur Verschmierung der Kontaktlinse sowie zu
+            Unverträglichkeiten mit dem Linsenmaterial führen könnte.</li></ul></li></ul><p>\_</p><ul>
+            <li>Verkehrstüchtigkeit und das Bedienen von Maschinen<ul><li>Bei Anwendung am Auge ist
+            eine kurzfristige Sehbeeinträchtigung möglich. Die Fähigkeit zur aktiven Teilnahme am
+            Straßenverkehr, bei der Arbeit ohne sicheren Halt und zur Bedienung von Maschinen kann
+            dadurch beeinträchtigt sein und sollte dann in dieser Zeit vermieden werden.</li></ul>
+            </li></ul>'
+        indication_ranges:
+          - code: "47"
+            description: Ophthalmika
+          - code: 47K
+            description: Vitamine
+          - code: 47K02
+            description: Dexpanthenol
+        images:
+          - "https://cdn.shop-apotheke.com/images/bepanthen-augen-und-nasensalbe-augen-und-nasensalbe-D01578675-p1.jpg"
+          - "https://cdn.shop-apotheke.com/images/bepanthen-augen-und-nasensalbe-augen-und-nasensalbe-D01578675-p2.jpg"
+        keywords:
+          - Trockene Nase
+        name: Bepanthen® Augen- und Nasensalbe
+        manufacturer:
+          code: A006410
+          name: Bayer Vital GmbH
+          path: /hersteller/bayer-vital-gmbh
+        meta_title: Bepanthen® Augen- und Nasensalbe 10 g - shop-apotheke.com
+        meta_description: |-
+          Bepanthen® Augen- und Nasensalbe 10 g für nur € 4,59 bei Ihrer Online Apotheke für Deutschland kaufen und bis zu 33% sparen.
+        mirakl_product_id: e435e0bd-37ec-428b-99ed-65a8dca9a5c2
+        ods_partners:
+          - zava
+        order_limit: 15
+        package_size:
+          norm: "N3"
+          unit: g
+          value: 10
+          quantity: "10"
+        pharma_form:
+          code: ASN
+          label: Augen- und Nasensalbe
+        pzn: 01578675
+        rating:
+          count: 431
+          average: 4.872
+          path: /produktbewertungen/3464237/aspirin-plus-c-brausetabletten.htm
+        redirect:
+          code: 01578681
+          type: product
+        substances:
+          - agent_id: 1613700
+            type: 1
+            description: Pantolacton
+          - agent_id: 186301
+            type: 0
+            description: Dexpanthenol
+            quantity: 50
+            unit: mg
+        type: "article"
+        updated: "2013-08-26T00:00:00+00:00"
+        upid: upaPKCLK4
+        path: "/arzneimittel/1578675/bepanthen-augen-und-nasensalbe.htm"
+        prices:
+          list:
+            currency: EUR
+            amount: 459
+            formatted: "€ 4,59"
+        variant_code: "3341579000"
+        variants:
+          - $ref: "#/components/examples/bepanthen_5g/value"
+          - $ref: "#/components/examples/bepanthen_10g/value"
+        vat:
+          code: DE_SR
+          rate: 16
+        videos:
+          - $ref: "#/components/examples/video/value"
+    pageable_product_list:
+      summary: Example of a pageable product list result
+      value:
+        items:
+          - $ref: "#/components/examples/bepanthen_5g/value"
+          - $ref: "#/components/examples/bepanthen_10g/value"
+        total: 2
+        offset: 0
+        limit: 3

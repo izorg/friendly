@@ -1,0 +1,170 @@
+openapi: 3.0.0
+info:
+  title: Leaflet Service v1
+  contact:
+    name: RedTecLab GmbH
+    url: https://www.redteclab.com
+    email: info@redteclab.com
+  description: Leaflet Service v1
+  license:
+    name: private
+  termsOfService: ''
+  version: 1.0.0
+servers:
+  - description: default
+    url: /
+paths:
+  '/pzns/{kind}':
+    get:
+      parameters:
+        - $ref: '#/components/parameters/kind'
+      responses:
+        '200':
+          $ref: '#/components/responses/200-list'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+  '/leaflets/{pzn}':
+    get:
+      parameters:
+        - $ref: '#/components/parameters/pzn'
+      responses:
+        '200':
+          $ref: '#/components/responses/200-leaflet'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+  '/lmiv/{pzn}':
+    get:
+      parameters:
+        - $ref: '#/components/parameters/pzn'
+      responses:
+        '200':
+          $ref: '#/components/responses/200-leaflet'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+  '/biozid/{pzn}':
+    get:
+      parameters:
+        - $ref: '#/components/parameters/pzn'
+      responses:
+        '200':
+          $ref: '#/components/responses/200-leaflet'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+  '/rx/{pzn}':
+    get:
+      parameters:
+        - $ref: '#/components/parameters/pzn'
+      responses:
+        '200':
+          $ref: '#/components/responses/200-leaflet'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+components:
+  schemas:
+    leaflet:
+      example:
+        link: https://api.gebrauchs.info/bd99cd269f91eb869676d04a8718f110i
+      properties:
+        link:
+          type: string
+      type: object
+    list:
+      example:
+        result:
+          - '10398392'
+          - '39120213'
+      properties:
+        result:
+          type: array
+          items:
+            type: string
+      type: object
+  parameters:
+    kind:
+      allowEmptyValue: false
+      description: Kind
+      example: leaflets
+      in: path
+      name: kind
+      required: true
+      schema:
+        type: string
+        enum:
+          - leaflets
+          - lmiv
+    pzn:
+      allowEmptyValue: false
+      description: PZN
+      example: 012345678
+      in: path
+      name: pzn
+      required: true
+      schema:
+        type: string
+  responses:
+    '200-list':
+      description: Available pzns list
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              result:
+                type: array
+                items:
+                  type: string
+            example:
+              result:
+                - '16368995'
+                - '16388064'
+    '200-leaflet':
+      description: PDF Link for PZN and type
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              result:
+                type: string
+            example:
+              result: 'https://api.gebrauchs.info/testlink123123'
+    '404':
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: number
+              error:
+                type: string
+            example:
+              code: 404
+              error: not found
+    '500':
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              key:
+                type: string
+              message:
+                type: string
+            example:
+              key: 'error.internal'
+              message: 'something unexpected went wrong'
+security: []
+tags: []
